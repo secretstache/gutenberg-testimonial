@@ -5,10 +5,19 @@
  */
 
 .wp-block-cgb-block-testimonial-block  {
-  background: $red;
-  border: 0.2rem solid $black;
-  color: $black;
+  border-left: 2px solid $gray;
   margin: 0 auto;
-  max-width: 740px;
-  padding: 2rem;
+  padding: 10px 15px;
+  box-shadow: 0px 0px 3px 2px $gray;
+  border-radius: 3px;
+
+  cite {
+    color: #ccc;
+
+    &::before {
+      content: '-';
+      display: inline-block;
+      margin-right: 5px;
+    }
+  }
 }
