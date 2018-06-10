@@ -9,9 +9,12 @@
 import './style.scss';
 import './editor.scss';
 
+import classnames from 'classnames';
+
 const { __ } = wp.i18n; // Import __() from wp.i18n
 const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
-const { RichText } = wp.editor;
+const { RichText, BlockControls } = wp.editor;
+const { Toolbar } = wp.components;
 
 /**
  * Register: aa Gutenberg Block.
@@ -45,6 +48,11 @@ registerBlockType( 'cgb/block-testimonial-block', {
 			source: 'text',
 			selector: 'cite',
 		},
+		quoteSign: {
+			source: 'attribute',
+			selector: 'blockquote',
+			attribute: 'data-quote-sign',
+		},
 	},
 
 	/**
@@ -56,24 +64,41 @@ registerBlockType( 'cgb/block-testimonial-block', {
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
 	 */
 	edit: function( { className, attributes, setAttributes } ) {
+		const withQuoteSign = !! attributes.quoteSign;
+
 		return (
-			<blockquote className={ className }>
-				<RichText
-					format="string"
-					tagName="p"
-					placeholder="Insert quote here..."
-					value={ attributes.quote }
-					onChange={ ( quote ) => setAttributes( { quote } ) }
-				/>
-				<footer>
+			<div>
+				<BlockControls key="control">
+					<Toolbar controls={ [
+						{
+							icon: 'editor-quote',
+							title: __( 'Add quote sign' ),
+							onClick: () => setAttributes( { quoteSign: ! withQuoteSign } ),
+							isActive: withQuoteSign,
+						},
+					] } />
+				</BlockControls>
+
+				<blockquote className={ classnames( className, { 'with-quote': withQuoteSign } ) } >
+					{ withQuoteSign }
+
 					<RichText
-						tagName="cite"
-						placeholder="Source"
-						value={ attributes.source }
-						onChange={ ( source ) => setAttributes( { source } ) }
+						format="string"
+						tagName="p"
+						placeholder="Insert quote here..."
+						value={ attributes.quote }
+						onChange={ ( quote ) => setAttributes( { quote } ) }
 					/>
-				</footer>
-			</blockquote>
+					<footer>
+						<RichText
+							tagName="cite"
+							placeholder="Source"
+							value={ attributes.source }
+							onChange={ ( source ) => setAttributes( { source } ) }
+						/>
+					</footer>
+				</blockquote>
+			</div>
 		);
 	},
 
@@ -85,9 +110,12 @@ registerBlockType( 'cgb/block-testimonial-block', {
 	 *
 	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
 	 */
-	save: function( { attributes } ) {
+	save: function( { className, attributes } ) {
+		const withQuoteSign = !! attributes.quoteSign;
+
 		return (
-			<blockquote>
+			<blockquote className={ classnames( className, { 'with-quote': withQuoteSign } ) }
+				data-quote-sign={ withQuoteSign }>
 				<RichText.Content
 					tagName="p"
 					value={ attributes.quote }
