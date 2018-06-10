@@ -13,8 +13,9 @@ import classnames from 'classnames';
 
 const { __ } = wp.i18n; // Import __() from wp.i18n
 const { registerBlockType } = wp.blocks; // Import registerBlockType() from wp.blocks
-const { RichText, BlockControls } = wp.editor;
-const { Toolbar } = wp.components;
+const { Fragment } = wp.element;
+const { RichText, BlockControls, MediaUpload } = wp.editor;
+const { Toolbar, Button, IconButton } = wp.components;
 
 /**
  * Register: aa Gutenberg Block.
@@ -53,6 +54,16 @@ registerBlockType( 'cgb/block-testimonial-block', {
 			selector: 'blockquote',
 			attribute: 'data-quote-sign',
 		},
+		imageUrl: {
+			source: 'attribute',
+			selector: 'img',
+			attribute: 'src',
+		},
+		imageAlt: {
+			source: 'attribute',
+			selector: 'img',
+			attribute: 'alt',
+		},
 	},
 
 	/**
@@ -65,6 +76,9 @@ registerBlockType( 'cgb/block-testimonial-block', {
 	 */
 	edit: function( { className, attributes, setAttributes } ) {
 		const withQuoteSign = !! attributes.quoteSign;
+		const onSelectImage = ( media ) => {
+			setAttributes( { imageUrl: media.url } );
+		};
 
 		return (
 			<div>
@@ -76,28 +90,58 @@ registerBlockType( 'cgb/block-testimonial-block', {
 							onClick: () => setAttributes( { quoteSign: ! withQuoteSign } ),
 							isActive: withQuoteSign,
 						},
-					] } />
+					] }>
+						<MediaUpload
+							type="image"
+							onSelect={ onSelectImage }
+							render={ ( { open } ) => (
+								<IconButton
+									className="components-toolbar__control"
+									label={ __( 'Add image' ) }
+									icon="format-image"
+									onClick={ open }
+								/>
+							) }
+						/>
+					</Toolbar>
 				</BlockControls>
 
-				<blockquote className={ classnames( className, { 'with-quote': withQuoteSign } ) } >
-					{ withQuoteSign }
+				<div className={ className }>
+					{
+						attributes.imageUrl ? (
+							<Fragment>
+								<img src={ attributes.imageUrl } alt={ attributes.imageAlt } />
+								<Button
+									onClick={ () => setAttributes( { imageUrl: null, imageAlt: null } ) }
+									className="button"
+									isSmall
+								>
+									Remove Image
+								</Button>
+							</Fragment>
+						) : ''
+					}
 
-					<RichText
-						format="string"
-						tagName="p"
-						placeholder="Insert quote here..."
-						value={ attributes.quote }
-						onChange={ ( quote ) => setAttributes( { quote } ) }
-					/>
-					<footer>
+					<blockquote
+						className={ classnames( { 'with-quote': withQuoteSign } ) }
+					>
 						<RichText
-							tagName="cite"
-							placeholder="Source"
-							value={ attributes.source }
-							onChange={ ( source ) => setAttributes( { source } ) }
+							format="string"
+							tagName="p"
+							placeholder="Insert quote here..."
+							value={ attributes.quote }
+							onChange={ ( quote ) => setAttributes( { quote } ) }
 						/>
-					</footer>
-				</blockquote>
+						<footer>
+							<RichText
+								tagName="cite"
+								placeholder="Source"
+								value={ attributes.source }
+								onChange={ ( source ) => setAttributes( { source } ) }
+							/>
+						</footer>
+					</blockquote>
+				</div>
 			</div>
 		);
 	},
@@ -114,19 +158,26 @@ registerBlockType( 'cgb/block-testimonial-block', {
 		const withQuoteSign = !! attributes.quoteSign;
 
 		return (
-			<blockquote className={ classnames( className, { 'with-quote': withQuoteSign } ) }
-				data-quote-sign={ withQuoteSign }>
-				<RichText.Content
-					tagName="p"
-					value={ attributes.quote }
-				/>
-				<footer>
+			<div className={ classnames( className, { 'with-quote': withQuoteSign } ) }>
+				{ attributes.imageUrl ? (
+					<img src={ attributes.imageUrl } alt={ attributes.imageAlt } />
+				) : '' }
+
+				<blockquote
+					data-quote-sign={ withQuoteSign }
+				>
 					<RichText.Content
-						tagName="cite"
-						value={ attributes.source }
+						tagName="p"
+						value={ attributes.quote }
 					/>
-				</footer>
-			</blockquote>
+					<footer>
+						<RichText.Content
+							tagName="cite"
+							value={ attributes.source }
+						/>
+					</footer>
+				</blockquote>
+			</div>
 		);
 	},
 } );
